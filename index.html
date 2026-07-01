@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Gastos Mensuales</title>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<!-- Bootstrap (solo para modal y utilidades puntuales) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+<style>
+  :root{
+    --azul-900:#0b2545;
+    --azul-700:#13315c;
+    --azul-500:#1d4e89;
+    --azul-300:#3f7cac;
+    --azul-100:#e8f0fa;
+    --gris-900:#22272e;
+    --gris-700:#444b54;
+    --gris-500:#7a828c;
+    --gris-300:#c7ccd1;
+    --gris-100:#f2f4f6;
+    --blanco:#ffffff;
+    --rojo:#b3402a;
+    --radio:10px;
+    --sombra:0 2px 8px rgba(11,37,69,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background:var(--gris-100);
+    color:var(--gris-900);
+  }
+  header{
+    background:linear-gradient(135deg, var(--azul-900), var(--azul-500));
+    color:var(--blanco);
+    padding:24px 32px;
+    box-shadow:var(--sombra);
+  }
+  header h1{
+    margin:0;
+    font-size:1.6rem;
+    font-weight:600;
+    letter-spacing:.3px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  header p{
+    margin:4px 0 0;
+    color:var(--azul-100);
+    font-size:.92rem;
+  }
+  .contenedor{
+    max-width:1180px;
+    margin:0 auto;
+    padding:24px 20px 60px;
+  }
+  .panel{
+    background:var(--blanco);
+    border-radius:var(--radio);
+    box-shadow:var(--sombra);
+    padding:20px;
+    margin-bottom:24px;
+    border:1px solid var(--gris-300);
+  }
+  .panel h2{
+    margin-top:0;
+    font-size:1.05rem;
+    color:var(--azul-900);
+    border-bottom:2px solid var(--azul-100);
+    padding-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .form-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(160px,1fr));
+    gap:14px;
+    align-items:end;
+  }
+  label{
+    display:block;
+    font-size:.78rem;
+    font-weight:600;
+    color:var(--gris-700);
+    margin-bottom:5px;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+  }
+  input, select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--gris-300);
+    border-radius:6px;
+    font-size:.92rem;
+    background:var(--gris-100);
+    color:var(--gris-900);
+  }
+  input:focus, select:focus{
+    outline:2px solid var(--azul-300);
+    outline-offset:1px;
+    background:var(--blanco);
+  }
+  input[type="file"]{
+    padding:6px 8px;
+    background:var(--blanco);
+  }
+  .btn{
+    cursor:pointer;
+    border:none;
+    border-radius:6px;
+    padding:10px 18px;
+    font-size:.9rem;
+    font-weight:600;
+    transition:filter .15s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn-primario{
+    background:var(--azul-500);
+    color:var(--blanco);
+  }
+  .btn-secundario{
+    background:var(--gris-300);
+    color:var(--gris-900);
+  }
+  .btn-eliminar{
+    background:transparent;
+    color:var(--rojo);
+    border:1px solid var(--rojo);
+    padding:5px 10px;
+    font-size:.78rem;
+  }
+  .btn-factura{
+    background:transparent;
+    color:var(--azul-500);
+    border:1px solid var(--azul-300);
+    padding:5px 10px;
+    font-size:.78rem;
+  }
+  .btn-pdf{
+    background:var(--azul-900);
+    color:var(--blanco);
+  }
+  .filtros{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:end;
+    margin-bottom:6px;
+  }
+  .filtros > div{flex:1; min-width:160px;}
+  .resumen-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(170px,1fr));
+    gap:14px;
+  }
+  .tarjeta-cat{
+    background:var(--blanco);
+    border:1px solid var(--gris-300);
+    border-radius:8px;
+    padding:16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .tarjeta-cat .icono{
+    width:42px;
+    height:42px;
+    min-width:42px;
+    border-radius:50%;
+    background:var(--gris-100);
+    border:1px solid var(--gris-300);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--azul-700);
+    font-size:1.15rem;
+  }
+  .tarjeta-cat .nombre{
+    font-size:.74rem;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    color:var(--gris-700);
+    font-weight:600;
+  }
+  .tarjeta-cat .monto{
+    font-size:1.2rem;
+    font-weight:700;
+    color:var(--azul-900);
+    margin-top:2px;
+  }
+  .total-general{
+    background:linear-gradient(135deg, var(--azul-700), var(--azul-900));
+    color:var(--blanco);
+    border-radius:10px;
+    padding:20px 24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+    box-shadow:var(--sombra);
+  }
+  .total-general .etiqueta{
+    font-size:.85rem;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--azul-100);
+  }
+  .total-general .valor{
+    font-size:2rem;
+    font-weight:700;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.88rem;
+  }
+  thead th{
+    text-align:left;
+    background:var(--azul-900);
+    color:var(--blanco);
+    padding:10px 12px;
+    font-weight:600;
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+  }
+  thead th:first-child{border-top-left-radius:6px;}
+  thead th:last-child{border-top-right-radius:6px;}
+  tbody td{
+    padding:10px 12px;
+    border-bottom:1px solid var(--gris-300);
+    color:var(--gris-900);
+    vertical-align:middle;
+  }
+  tbody tr:hover{background:var(--azul-100);}
+  tbody tr:nth-child(even){background:var(--gris-100);}
+  tbody tr:nth-child(even):hover{background:var(--azul-100);}
+  .etiqueta-cat{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:3px 9px;
+    border-radius:20px;
+    font-size:.74rem;
+    font-weight:600;
+    background:var(--azul-100);
+    color:var(--azul-700);
+    white-space:nowrap;
+  }
+  .vacio{
+    text-align:center;
+    color:var(--gris-500);
+    padding:30px;
+    font-style:italic;
+  }
+  .acciones-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .pie-form{
+    margin-top:14px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .miniatura{
+    width:34px;
+    height:34px;
+    object-fit:cover;
+    border-radius:6px;
+    border:1px solid var(--gris-300);
+    cursor:pointer;
+  }
+  .sin-factura{
+    color:var(--gris-500);
+    font-size:.78rem;
+    font-style:italic;
+  }
+  footer{
+    text-align:center;
+    color:var(--gris-500);
+    font-size:.78rem;
+    padding:10px 0 30px;
+  }
+  #modal-imagen img{
+    width:100%;
+    border-radius:8px;
+  }
+  @media (max-width:600px){
+    header{padding:18px 16px;}
+    .total-general{flex-direction:column; align-items:flex-start; gap:6px;}
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;}
+    tbody tr{
+      margin-bottom:10px;
+      border:1px solid var(--gris-300);
+      border-radius:8px;
+      overflow:hidden;
+    }
+    tbody td{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid var(--gris-100);
+    }
+    tbody td::before{
+      content:attr(data-etiqueta);
+      font-weight:600;
+      color:var(--gris-700);
+      margin-right:10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><i class="bi bi-cash-stack"></i> Control de Gastos Mensuales</h1>
+  <p>Cargá, filtrá y revisá los gastos por categoría — los datos quedan guardados en la nube (Supabase).</p>
+</header>
+
+<div class="contenedor">
+
+  <!-- Formulario de carga -->
+  <div class="panel">
+    <h2><i class="bi bi-plus-circle"></i> Cargar nuevo gasto</h2>
+    <form id="form-gasto">
+      <div class="form-grid">
+        <div>
+          <label for="fecha">Fecha</label>
+          <input type="date" id="fecha" required>
+        </div>
+        <div>
+          <label for="categoria">Categoría</label>
+          <select id="categoria" required>
+            <option value="" disabled selected>Elegir...</option>
+          </select>
+        </div>
+        <div style="grid-column:span 2;">
+          <label for="detalle">Detalle</label>
+          <input type="text" id="detalle" placeholder="Ej: pago a Juan Pérez, compra de cemento, etc." required>
+        </div>
+        <div>
+          <label for="monto">Monto (Gs.)</label>
+          <input type="text" inputmode="numeric" id="monto" placeholder="0" required>
+        </div>
+        <div style="grid-column:span 2;">
+          <label for="factura"><i class="bi bi-receipt"></i> Foto de la factura (opcional)</label>
+          <input type="file" id="factura" accept="image/*">
+        </div>
+      </div>
+      <div class="pie-form">
+        <button type="submit" class="btn btn-primario"><i class="bi bi-plus-lg"></i> Agregar gasto</button>
+        <button type="button" id="btn-limpiar-form" class="btn btn-secundario"><i class="bi bi-eraser"></i> Limpiar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Filtros -->
+  <div class="panel">
+    <h2><i class="bi bi-funnel"></i> Filtros</h2>
+    <div class="filtros">
+      <div>
+        <label for="filtro-mes">Mes</label>
+        <input type="month" id="filtro-mes">
+      </div>
+      <div>
+        <label for="filtro-categoria">Categoría</label>
+        <select id="filtro-categoria">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div>
+        <button type="button" id="btn-quitar-filtros" class="btn btn-secundario" style="width:100%;"><i class="bi bi-x-circle"></i> Quitar filtros</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total general -->
+  <div class="total-general">
+    <div>
+      <div class="etiqueta">Total del período filtrado</div>
+      <div class="valor" id="total-general">Gs. 0</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="etiqueta">Cantidad de gastos</div>
+      <div class="valor" id="cantidad-gastos" style="font-size:1.4rem;">0</div>
+    </div>
+  </div>
+
+  <!-- Resumen por categoría -->
+  <div class="panel">
+    <h2><i class="bi bi-pie-chart"></i> Total por categoría</h2>
+    <div class="resumen-grid" id="resumen-categorias"></div>
+  </div>
+
+  <!-- Tabla de detalle -->
+  <div class="panel">
+    <div class="acciones-top">
+      <h2 style="border:none; margin:0; padding:0;"><i class="bi bi-list-ul"></i> Detalle de gastos</h2>
+      <div style="display:flex; gap:8px;">
+        <button type="button" id="btn-exportar" class="btn btn-pdf"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto; margin-top:10px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Categoría</th>
+            <th>Detalle</th>
+            <th>Monto</th>
+            <th>Factura</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="cuerpo-tabla"></tbody>
+      </table>
+      <div id="mensaje-vacio" class="vacio" style="display:none;">No hay gastos cargados para este filtro.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Los datos se guardan en Supabase. Las fotos se almacenan en la nube.</footer>
+
+<!-- Modal para ver la factura ampliada -->
+<div class="modal fade" id="modal-imagen" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-receipt"></i> Factura</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <img id="img-modal-contenido" src="" alt="Factura">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS (para el modal) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- jsPDF y autotable para exportar PDF -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ============================================================
+//  CONFIGURACIÓN DE SUPABASE (TUS CREDENCIALES)
+// ============================================================
+const SUPABASE_URL = 'https://junmbjkyihochxcdppzr.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Q9fUtf7Wt39Y4Ij2ihAczw_YhFLh7Wb';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+//  DEFINICIONES Y VARIABLES GLOBALES
+// ============================================================
+const CATEGORIAS = [
+  { valor:"Adelantos",  etiqueta:"Adelantos",        icono:"bi-cash-coin" },
+  { valor:"Sueldos",    etiqueta:"Sueldos",          icono:"bi-wallet2" },
+  { valor:"Ferreteria", etiqueta:"Ferretería",       icono:"bi-tools" },
+  { valor:"Insumos",    etiqueta:"Insumos",          icono:"bi-box-seam" },
+  { valor:"Combustible",etiqueta:"Combustible",      icono:"bi-fuel-pump" },
+  { valor:"Internet",   etiqueta:"Link Internet",    icono:"bi-wifi" },
+  { valor:"Limpieza",   etiqueta:"Limpieza semanal", icono:"bi-droplet-half" },
+  { valor:"Otros",      etiqueta:"Otros gastos",     icono:"bi-three-dots" }
+];
+
+function infoCategoria(valor) {
+  return CATEGORIAS.find(c => c.valor === valor) || { etiqueta: valor, icono: "bi-tag" };
+}
+
+let gastos = []; // se llena desde Supabase
+
+// ============================================================
+//  FUNCIONES DE SUPABASE
+// ============================================================
+async function cargarGastos() {
+  const { data, error } = await supabase
+    .from('gastos')
+    .select('*')
+    .order('fecha', { ascending: false });
+  if (error) {
+    console.error('Error al cargar gastos:', error);
+    alert('Error al cargar los gastos. Revisá la consola.');
+    return [];
+  }
+  return data || [];
+}
+
+async function insertarGasto(gasto) {
+  const { data, error } = await supabase
+    .from('gastos')
+    .insert([gasto])
+    .select();
+  if (error) {
+    console.error('Error al insertar:', error);
+    alert('No se pudo guardar: ' + error.message);
+    return null;
+  }
+  return data[0];
+}
+
+async function eliminarGasto(id) {
+  // Primero obtener la foto para borrarla del storage (si existe)
+  const { data: gasto, error: getError } = await supabase
+    .from('gastos')
+    .select('foto_url')
+    .eq('id', id)
+    .single();
+  if (getError) {
+    console.error('Error al obtener gasto para eliminar:', getError);
+  } else if (gasto && gasto.foto_url) {
+    const path = gasto.foto_url.split('/').pop();
+    if (path) {
+      await supabase.storage.from('facturas').remove([`public/${path}`]);
+    }
+  }
+  // Eliminar el registro
+  const { error } = await supabase
+    .from('gastos')
+    .delete()
+    .eq('id', id);
+  if (error) {
+    console.error('Error al eliminar:', error);
+    alert('Error al eliminar: ' + error.message);
+    return false;
+  }
+  return true;
+}
+
+async function subirFoto(file) {
+  if (!file) return null;
+  const fileName = `${Date.now()}_${file.name}`;
+  const { data, error } = await supabase.storage
+    .from('facturas')
+    .upload(`public/${fileName}`, file);
+  if (error) {
+    console.error('Error al subir foto:', error);
+    alert('Error al subir la foto: ' + error.message);
+    return null;
+  }
+  const { data: publicUrlData } = supabase.storage
+    .from('facturas')
+    .getPublicUrl(`public/${fileName}`);
+  return publicUrlData.publicUrl;
+}
+
+// ============================================================
+//  FUNCIONES AUXILIARES
+// ============================================================
+function formatoGs(numero) {
+  return "Gs. " + Math.round(numero).toLocaleString("es-PY");
+}
+
+function formatearFecha(iso) {
+  const [a, m, d] = iso.split("-");
+  return `${d}/${m}/${a}`;
+}
+
+function escaparHtml(texto) {
+  const div = document.createElement("div");
+  div.textContent = texto;
+  return div.innerHTML;
+}
+
+function hoyISO() {
+  const d = new Date();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mes}-${dia}`;
+}
+
+// ============================================================
+//  POBLAR SELECTS DE CATEGORÍA
+// ============================================================
+function poblarSelectsCategoria() {
+  const selCategoria = document.getElementById("categoria");
+  const selFiltro = document.getElementById("filtro-categoria");
+  CATEGORIAS.forEach(c => {
+    const op1 = document.createElement("option");
+    op1.value = c.valor; op1.textContent = c.etiqueta;
+    selCategoria.appendChild(op1);
+
+    const op2 = document.createElement("option");
+    op2.value = c.valor; op2.textContent = c.etiqueta;
+    selFiltro.appendChild(op2);
+  });
+}
+poblarSelectsCategoria();
+
+// ============================================================
+//  FORMULARIO
+// ============================================================
+const inputMonto = document.getElementById("monto");
+inputMonto.addEventListener("input", function() {
+  let limpio = inputMonto.value.replace(/\D/g, "");
+  if (limpio === "") {
+    inputMonto.value = "";
+    return;
+  }
+  inputMonto.value = Number(limpio).toLocaleString("es-PY");
+});
+function montoNumerico(valorFormateado) {
+  const limpio = valorFormateado.replace(/\D/g, "");
+  return limpio === "" ? NaN : Number(limpio);
+}
+
+let archivoFactura = null;
+const inputFactura = document.getElementById("factura");
+inputFactura.addEventListener("change", function() {
+  archivoFactura = inputFactura.files[0] || null;
+});
+
+const form = document.getElementById("form-gasto");
+form.addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const fecha = document.getElementById("fecha").value;
+  const categoria = document.getElementById("categoria").value;
+  const detalle = document.getElementById("detalle").value.trim();
+  const monto = montoNumerico(inputMonto.value);
+
+  if (!fecha || !categoria || !detalle || isNaN(monto) || monto <= 0) {
+    alert("Completá todos los campos con un monto válido.");
+    return;
+  }
+
+  let foto_url = null;
+  if (archivoFactura) {
+    foto_url = await subirFoto(archivoFactura);
+    if (!foto_url) return;
+  }
+
+  const nuevoGasto = { fecha, categoria, detalle, monto, foto_url };
+  const insertado = await insertarGasto(nuevoGasto);
+  if (insertado) {
+    await renderizarTodo();
+    form.reset();
+    archivoFactura = null;
+    document.getElementById("fecha").value = hoyISO();
+  }
+});
+
+document.getElementById("btn-limpiar-form").addEventListener("click", function() {
+  form.reset();
+  archivoFactura = null;
+  document.getElementById("fecha").value = hoyISO();
+});
+
+// ============================================================
+//  FILTROS
+// ============================================================
+const filtroMes = document.getElementById("filtro-mes");
+const filtroCategoria = document.getElementById("filtro-categoria");
+filtroMes.addEventListener("change", renderizarTodo);
+filtroCategoria.addEventListener("change", renderizarTodo);
+document.getElementById("btn-quitar-filtros").addEventListener("click", function() {
+  filtroMes.value = "";
+  filtroCategoria.value = "";
+  renderizarTodo();
+});
+
+function obtenerGastosFiltrados() {
+  return gastos.filter(g => {
+    const coincideMes = filtroMes.value ? g.fecha.slice(0, 7) === filtroMes.value : true;
+    const coincideCategoria = filtroCategoria.value ? g.categoria === filtroCategoria.value : true;
+    return coincideMes && coincideCategoria;
+  });
+}
+
+// ============================================================
+//  RENDERIZADO
+// ============================================================
+async function renderizarTodo() {
+  gastos = await cargarGastos();
+  const filtrados = obtenerGastosFiltrados();
+  renderizarTabla(filtrados);
+  renderizarResumen(filtrados);
+  renderizarTotalGeneral(filtrados);
+}
+
+function renderizarTabla(lista) {
+  const cuerpo = document.getElementById("cuerpo-tabla");
+  const mensajeVacio = document.getElementById("mensaje-vacio");
+  cuerpo.innerHTML = "";
+
+  if (lista.length === 0) {
+    mensajeVacio.style.display = "block";
+    return;
+  }
+  mensajeVacio.style.display = "none";
+
+  lista.forEach(g => {
+    const info = infoCategoria(g.categoria);
+    const fila = document.createElement("tr");
+
+    let celdaFactura = `<span class="sin-factura">Sin foto</span>`;
+    if (g.foto_url) {
+      celdaFactura = `<img src="${g.foto_url}" class="miniatura" data-url="${g.foto_url}" alt="Factura">`;
+    }
+
+    fila.innerHTML = `
+      <td data-etiqueta="Fecha">${formatearFecha(g.fecha)}</td>
+      <td data-etiqueta="Categoría"><span class="etiqueta-cat"><i class="bi ${info.icono}"></i> ${info.etiqueta}</span></td>
+      <td data-etiqueta="Detalle">${escaparHtml(g.detalle)}</td>
+      <td data-etiqueta="Monto">${formatoGs(g.monto)}</td>
+      <td data-etiqueta="Factura">${celdaFactura}</td>
+      <td data-etiqueta=""><button class="btn btn-eliminar" data-id="${g.id}"><i class="bi bi-trash3"></i></button></td>
+    `;
+    cuerpo.appendChild(fila);
+  });
+
+  cuerpo.querySelectorAll(".btn-eliminar").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (confirm("¿Eliminar este gasto?")) {
+        const ok = await eliminarGasto(btn.dataset.id);
+        if (ok) await renderizarTodo();
+      }
+    });
+  });
+
+  cuerpo.querySelectorAll(".miniatura").forEach(img => {
+    img.addEventListener("click", () => verFactura(img.dataset.url));
+  });
+}
+
+function renderizarResumen(lista) {
+  const cont = document.getElementById("resumen-categorias");
+  cont.innerHTML = "";
+  CATEGORIAS.forEach(c => {
+    const total = lista.filter(g => g.categoria === c.valor).reduce((s, g) => s + g.monto, 0);
+    const tarjeta = document.createElement("div");
+    tarjeta.className = "tarjeta-cat";
+    tarjeta.innerHTML = `
+      <div class="icono"><i class="bi ${c.icono}"></i></div>
+      <div>
+        <div class="nombre">${c.etiqueta}</div>
+        <div class="monto">${formatoGs(total)}</div>
+      </div>
+    `;
+    cont.appendChild(tarjeta);
+  });
+}
+
+function renderizarTotalGeneral(lista) {
+  const total = lista.reduce((s, g) => s + g.monto, 0);
+  document.getElementById("total-general").textContent = formatoGs(total);
+  document.getElementById("cantidad-gastos").textContent = lista.length;
+}
+
+// ============================================================
+//  MODAL PARA VER FACTURA
+// ============================================================
+let modalImagen;
+document.addEventListener("DOMContentLoaded", function() {
+  modalImagen = new bootstrap.Modal(document.getElementById("modal-imagen"));
+});
+function verFactura(url) {
+  document.getElementById("img-modal-contenido").src = url;
+  modalImagen.show();
+}
+
+// ============================================================
+//  EXPORTAR PDF
+// ============================================================
+document.getElementById("btn-exportar").addEventListener("click", function() {
+  const lista = obtenerGastosFiltrados();
+  if (lista.length === 0) {
+    alert("No hay datos para exportar con el filtro actual.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const periodo = filtroMes.value ? filtroMes.value : "Todos los meses";
+  const categoriaFiltro = filtroCategoria.value ? infoCategoria(filtroCategoria.value).etiqueta : "Todas";
+
+  doc.setFontSize(16);
+  doc.setTextColor(11, 37, 69);
+  doc.text("Control de Gastos Mensuales", 14, 18);
+
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Período: ${periodo}   |   Categoría: ${categoriaFiltro}`, 14, 25);
+
+  const filas = lista.map(g => [
+    formatearFecha(g.fecha),
+    infoCategoria(g.categoria).etiqueta,
+    g.detalle,
+    formatoGs(g.monto)
+  ]);
+
+  doc.autoTable({
+    head: [["Fecha", "Categoría", "Detalle", "Monto"]],
+    body: filas,
+    startY: 32,
+    headStyles: { fillColor: [11, 37, 69], textColor: 255 },
+    alternateRowStyles: { fillColor: [242, 244, 246] },
+    styles: { fontSize: 9, cellPadding: 4 },
+    columnStyles: { 3: { halign: "right" } }
+  });
+
+  let y = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(12);
+  doc.setTextColor(11, 37, 69);
+  doc.text("Totales por categoría", 14, y);
+  y += 6;
+
+  const filasResumen = CATEGORIAS
+    .map(c => [c.etiqueta, formatoGs(lista.filter(g => g.categoria === c.valor).reduce((s, g) => s + g.monto, 0))])
+    .filter((fila, i) => lista.some(g => g.categoria === CATEGORIAS[i].valor));
+
+  doc.autoTable({
+    head: [["Categoría", "Total"]],
+    body: filasResumen,
+    startY: y,
+    headStyles: { fillColor: [68, 75, 84], textColor: 255 },
+    styles: { fontSize: 9, cellPadding: 4 },
+    columnStyles: { 1: { halign: "right" } }
+  });
+
+  const totalGeneral = lista.reduce((s, g) => s + g.monto, 0);
+  let y2 = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(13);
+  doc.setTextColor(11, 37, 69);
+  doc.text(`Total general: ${formatoGs(totalGeneral)}`, 14, y2);
+
+  doc.save("gastos_" + (filtroMes.value || "todos") + ".pdf");
+});
+
+// ============================================================
+//  INICIALIZAR
+// ============================================================
+document.getElementById("fecha").value = hoyISO();
+renderizarTodo();
+</script>
+</body>
+</html>

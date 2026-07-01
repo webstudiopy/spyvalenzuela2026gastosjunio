@@ -1,0 +1,67 @@
+CONTROL DE GASTOS MENSUALES
+============================
+
+CÓMO USARLO
+-----------
+1. Descomprimí el archivo zip.
+2. Hacé doble clic en "index.html" para abrirlo con tu navegador (Chrome, Edge, Firefox, etc.).
+3. Listo, ya podés empezar a cargar gastos.
+
+IMPORTANTE: necesita conexión a internet
+------------------------------------------
+Esta versión usa los íconos (Bootstrap Icons) y el generador de PDF (jsPDF)
+desde internet. Para que se vean los íconos y para poder exportar el PDF,
+la computadora debe tener conexión a internet en el momento de usarlo.
+Cargar y guardar gastos funciona igual, con o sin internet; lo que requiere
+conexión es la parte visual (íconos) y el botón "Exportar PDF".
+
+NOVEDADES DE ESTA VERSIÓN
+---------------------------
+- Categoría nueva: "Limpieza semanal".
+- El campo Monto ahora separa los miles automáticamente mientras escribís
+  (por ejemplo, escribís 20000 y se muestra 20.000).
+- Cada gasto puede tener una foto de factura adjunta (botón "Foto de la
+  factura" en el formulario). Se ve como una miniatura en la tabla y, si
+  hacés clic en la miniatura, se abre ampliada.
+- Las tarjetas de "Total por categoría" ahora son blancas, con ícono y
+  nombre de categoría, sin colores de fondo.
+- El botón "Exportar CSV" fue reemplazado por "Exportar PDF": genera un
+  PDF prolijo con el detalle de gastos filtrado y los totales por
+  categoría.
+
+DÓNDE QUEDAN GUARDADOS LOS DATOS
+---------------------------------
+Los gastos (y las fotos de factura) se guardan en el almacenamiento local
+del navegador (localStorage) en la computadora donde lo uses. Esto significa:
+
+- Los datos NO se envían a internet ni a ningún servidor: todo queda en tu PC
+  (la conexión a internet solo se usa para cargar los íconos y el generador
+  de PDF, no para guardar información).
+- Si abrís el archivo siempre desde el MISMO navegador y la MISMA computadora,
+  los datos van a seguir ahí la próxima vez que lo abras.
+- Si lo abrís desde otro navegador o computadora, vas a empezar con la
+  planilla vacía.
+
+ATENCIÓN CON LAS FOTOS DE FACTURA
+-----------------------------------
+El navegador tiene un límite de espacio de almacenamiento (aproximadamente
+5 a 10 MB en total). Las fotos de factura ocupan bastante más espacio que
+el texto, así que:
+
+- Si vas a cargar muchas facturas, conviene sacar la foto con buena luz
+  pero sin que el archivo sea enorme (no hace falta máxima resolución).
+- Si en algún momento aparece un aviso de que no se pudo guardar, significa
+  que se llenó el espacio disponible; en ese caso convendría borrar algún
+  gasto con foto antigua o pasar a una versión con almacenamiento en la
+  nube (ver más abajo).
+
+RECOMENDACIÓN
+--------------
+Si vas a usarlo todos los meses, dejá siempre el mismo acceso directo al
+archivo index.html (no lo muevas de carpeta) y usá siempre el mismo
+navegador para no perder el historial cargado.
+
+Si en algún momento querés una versión con base de datos compartida en la
+nube (para usar desde varias computadoras o celulares con los mismos datos,
+y sin límite de espacio para las fotos), se puede armar como un paso
+siguiente.
