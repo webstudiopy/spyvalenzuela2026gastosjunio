@@ -6,9 +6,8 @@
 <title>Control de Gastos Mensuales</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-
 <style>
-  /* ===== ESTILOS COMPLETOS (mismos que antes) ===== */
+  /* ===== ESTILOS COMPLETOS (los mismos de siempre) ===== */
   :root{
     --azul-900:#0b2545; --azul-700:#13315c; --azul-500:#1d4e89;
     --azul-300:#3f7cac; --azul-100:#e8f0fa;
@@ -190,14 +189,6 @@
           <label for="categoria">Categoría</label>
           <select id="categoria" required>
             <option value="" disabled selected>Elegir...</option>
-            <option value="Adelantos">Adelantos</option>
-            <option value="Sueldos">Sueldos</option>
-            <option value="Ferreteria">Ferretería</option>
-            <option value="Insumos">Insumos</option>
-            <option value="Combustible">Combustible</option>
-            <option value="Internet">Link Internet</option>
-            <option value="Limpieza">Limpieza semanal</option>
-            <option value="Otros">Otros gastos</option>
           </select>
         </div>
         <div style="grid-column:span 2;">
@@ -232,14 +223,6 @@
         <label for="filtro-categoria">Categoría</label>
         <select id="filtro-categoria">
           <option value="">Todas</option>
-          <option value="Adelantos">Adelantos</option>
-          <option value="Sueldos">Sueldos</option>
-          <option value="Ferreteria">Ferretería</option>
-          <option value="Insumos">Insumos</option>
-          <option value="Combustible">Combustible</option>
-          <option value="Internet">Link Internet</option>
-          <option value="Limpieza">Limpieza semanal</option>
-          <option value="Otros">Otros gastos</option>
         </select>
       </div>
       <div>
@@ -312,7 +295,7 @@
 
 <script>
 // ============================================================
-//  CATEGORÍAS (ya están en el HTML, pero mantenemos para referencia)
+// 1. CATEGORÍAS (fijas)
 // ============================================================
 const CATEGORIAS = [
   { valor:"Adelantos",  etiqueta:"Adelantos",        icono:"bi-cash-coin" },
@@ -330,24 +313,64 @@ function infoCategoria(valor) {
 }
 
 // ============================================================
-//  SUPABASE (sin redeclarar)
+// 2. POBLAR SELECTS (se ejecuta ANTES de cualquier otra cosa)
 // ============================================================
-let supabase = null;
-try {
-  if (window.supabase) {
-    const SUPABASE_URL = 'https://junmbjkyihochxcdppzr.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_Q9fUtf7Wt39Y4Ij2ihAczw_YhFLh7Wb';
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  } else {
-    console.warn('Supabase SDK no cargado.');
+function poblarSelects() {
+  console.log("Poblando selects...");
+  const selCat = document.getElementById("categoria");
+  const selFiltro = document.getElementById("filtro-categoria");
+  if (!selCat || !selFiltro) {
+    console.warn("Selects no encontrados. Reintentando en 200ms.");
+    setTimeout(poblarSelects, 200);
+    return;
   }
-} catch (e) {
-  console.warn('Error al crear cliente Supabase:', e);
-  supabase = null;
+  selCat.innerHTML = '<option value="" disabled selected>Elegir...</option>';
+  selFiltro.innerHTML = '<option value="">Todas</option>';
+  CATEGORIAS.forEach(c => {
+    const o1 = document.createElement("option");
+    o1.value = c.valor;
+    o1.textContent = c.etiqueta;
+    selCat.appendChild(o1);
+    const o2 = document.createElement("option");
+    o2.value = c.valor;
+    o2.textContent = c.etiqueta;
+    selFiltro.appendChild(o2);
+  });
+  console.log("Selects poblados. Opciones:", selCat.options.length);
+}
+
+// Ejecutar poblarSelects inmediatamente (y varias veces por seguridad)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', poblarSelects);
+} else {
+  poblarSelects();
+}
+setTimeout(poblarSelects, 300);
+setTimeout(poblarSelects, 600);
+
+// ============================================================
+// 3. SUPABASE (sin redeclarar, usando función)
+// ============================================================
+function obtenerSupabase() {
+  if (window._supabaseClient) return window._supabaseClient;
+  if (!window.supabase) {
+    console.warn("SDK de Supabase no cargado.");
+    return null;
+  }
+  try {
+    const url = 'https://junmbjkyihochxcdppzr.supabase.co'; 
+    const key = 'sb_publishable_Q9fUtf7Wt39Y4Ij2ihAczw_YhFLh7Wb';
+    window._supabaseClient = window.supabase.createClient(url, key);
+    console.log("Cliente Supabase creado.");
+    return window._supabaseClient;
+  } catch (e) {
+    console.error("Error al crear cliente Supabase:", e);
+    return null;
+  }
 }
 
 // ============================================================
-//  RESTO DEL CÓDIGO (funciones, eventos, renderizado)
+// 4. VARIABLES Y FUNCIONES DE LA APP
 // ============================================================
 let gastos = [];
 let archivoFactura = null;
@@ -358,6 +381,7 @@ function formatoGs(numero) {
   return "Gs. " + Math.round(numero).toLocaleString("es-PY");
 }
 function formatearFecha(iso) {
+  if (!iso) return "";
   const [a, m, d] = iso.split("-");
   return `${d}/${m}/${a}`;
 }
@@ -377,8 +401,9 @@ function montoNumerico(valorFormateado) {
   return limpio === "" ? NaN : Number(limpio);
 }
 
-// Funciones de Supabase (con verificación)
+// Funciones de Supabase (usando obtenerSupabase)
 async function cargarGastos() {
+  const supabase = obtenerSupabase();
   if (!supabase) return [];
   try {
     const { data, error } = await supabase
@@ -386,40 +411,44 @@ async function cargarGastos() {
       .select('*')
       .order('fecha', { ascending: false });
     if (error) {
-      console.error('Error al cargar gastos:', error);
+      console.error("Error al cargar gastos:", error);
       return [];
     }
     return data || [];
   } catch (e) {
-    console.error('Excepción al cargar gastos:', e);
+    console.error("Excepción al cargar gastos:", e);
     return [];
   }
 }
 
 async function insertarGasto(gasto) {
-  if (!supabase) { alert('Supabase no disponible.'); return null; }
+  const supabase = obtenerSupabase();
+  if (!supabase) {
+    alert("Supabase no disponible.");
+    return null;
+  }
   try {
     const { data, error } = await supabase
       .from('gastos')
       .insert([gasto])
       .select();
     if (error) {
-      console.error('Error al insertar:', error);
-      alert('No se pudo guardar: ' + error.message);
+      console.error("Error al insertar:", error);
+      alert("No se pudo guardar: " + error.message);
       return null;
     }
     return data[0];
   } catch (e) {
-    console.error('Excepción al insertar:', e);
-    alert('Error de conexión con Supabase.');
+    console.error("Excepción al insertar:", e);
+    alert("Error de conexión con Supabase.");
     return null;
   }
 }
 
 async function eliminarGasto(id) {
+  const supabase = obtenerSupabase();
   if (!supabase) return false;
   try {
-    // Obtener foto para borrar
     const { data: gasto, error: getError } = await supabase
       .from('gastos')
       .select('foto_url')
@@ -436,18 +465,19 @@ async function eliminarGasto(id) {
       .delete()
       .eq('id', id);
     if (error) {
-      console.error('Error al eliminar:', error);
-      alert('Error al eliminar: ' + error.message);
+      console.error("Error al eliminar:", error);
+      alert("Error al eliminar: " + error.message);
       return false;
     }
     return true;
   } catch (e) {
-    console.error('Excepción al eliminar:', e);
+    console.error("Excepción al eliminar:", e);
     return false;
   }
 }
 
 async function subirFoto(file) {
+  const supabase = obtenerSupabase();
   if (!supabase || !file) return null;
   try {
     const fileName = `${Date.now()}_${file.name}`;
@@ -455,8 +485,8 @@ async function subirFoto(file) {
       .from('facturas')
       .upload(`public/${fileName}`, file);
     if (error) {
-      console.error('Error al subir foto:', error);
-      alert('Error al subir la foto: ' + error.message);
+      console.error("Error al subir foto:", error);
+      alert("Error al subir la foto: " + error.message);
       return null;
     }
     const { data: publicUrlData } = supabase.storage
@@ -464,13 +494,13 @@ async function subirFoto(file) {
       .getPublicUrl(`public/${fileName}`);
     return publicUrlData.publicUrl;
   } catch (e) {
-    console.error('Excepción al subir foto:', e);
+    console.error("Excepción al subir foto:", e);
     return null;
   }
 }
 
 // ============================================================
-//  EVENTOS DEL FORMULARIO
+// 5. EVENTOS Y RENDERIZADO
 // ============================================================
 const inputMonto = document.getElementById("monto");
 inputMonto.addEventListener("input", function() {
@@ -516,9 +546,7 @@ document.getElementById("btn-limpiar-form").addEventListener("click", function()
   document.getElementById("fecha").value = hoyISO();
 });
 
-// ============================================================
-//  FILTROS
-// ============================================================
+// Filtros
 const filtroMes = document.getElementById("filtro-mes");
 const filtroCategoria = document.getElementById("filtro-categoria");
 filtroMes.addEventListener("change", renderizarTodo);
@@ -537,9 +565,7 @@ function obtenerGastosFiltrados() {
   });
 }
 
-// ============================================================
-//  RENDERIZADO
-// ============================================================
+// Renderizado
 async function renderizarTodo() {
   gastos = await cargarGastos();
   const filtrados = obtenerGastosFiltrados();
@@ -552,13 +578,11 @@ function renderizarTabla(lista) {
   const cuerpo = document.getElementById("cuerpo-tabla");
   const mensajeVacio = document.getElementById("mensaje-vacio");
   cuerpo.innerHTML = "";
-
   if (lista.length === 0) {
     mensajeVacio.style.display = "block";
     return;
   }
   mensajeVacio.style.display = "none";
-
   lista.forEach(g => {
     const info = infoCategoria(g.categoria);
     const fila = document.createElement("tr");
@@ -576,7 +600,6 @@ function renderizarTabla(lista) {
     `;
     cuerpo.appendChild(fila);
   });
-
   cuerpo.querySelectorAll(".btn-eliminar").forEach(btn => {
     btn.addEventListener("click", async () => {
       if (confirm("¿Eliminar este gasto?")) {
@@ -585,7 +608,6 @@ function renderizarTabla(lista) {
       }
     });
   });
-
   cuerpo.querySelectorAll(".miniatura").forEach(img => {
     img.addEventListener("click", () => verFactura(img.dataset.url));
   });
@@ -615,9 +637,7 @@ function renderizarTotalGeneral(lista) {
   document.getElementById("cantidad-gastos").textContent = lista.length;
 }
 
-// ============================================================
-//  MODAL
-// ============================================================
+// Modal
 function verFactura(url) {
   document.getElementById("img-modal-contenido").src = url;
   if (!modalImagen) {
@@ -626,9 +646,7 @@ function verFactura(url) {
   modalImagen.show();
 }
 
-// ============================================================
-//  EXPORTAR PDF
-// ============================================================
+// Exportar PDF
 document.getElementById("btn-exportar").addEventListener("click", function() {
   const lista = obtenerGastosFiltrados();
   if (lista.length === 0) { alert("No hay datos."); return; }
@@ -636,21 +654,18 @@ document.getElementById("btn-exportar").addEventListener("click", function() {
   const doc = new jsPDF();
   const periodo = filtroMes.value || "Todos los meses";
   const categoriaFiltro = filtroCategoria.value ? infoCategoria(filtroCategoria.value).etiqueta : "Todas";
-
   doc.setFontSize(16);
   doc.setTextColor(11,37,69);
   doc.text("Control de Gastos Mensuales", 14, 18);
   doc.setFontSize(10);
   doc.setTextColor(80,80,80);
   doc.text(`Período: ${periodo}   |   Categoría: ${categoriaFiltro}`, 14, 25);
-
   const filas = lista.map(g => [
     formatearFecha(g.fecha),
     infoCategoria(g.categoria).etiqueta,
     g.detalle,
     formatoGs(g.monto)
   ]);
-
   doc.autoTable({
     head: [["Fecha","Categoría","Detalle","Monto"]],
     body: filas,
@@ -660,17 +675,14 @@ document.getElementById("btn-exportar").addEventListener("click", function() {
     styles: { fontSize: 9, cellPadding: 4 },
     columnStyles: { 3: { halign: "right" } }
   });
-
   let y = doc.lastAutoTable.finalY + 10;
   doc.setFontSize(12);
   doc.setTextColor(11,37,69);
   doc.text("Totales por categoría", 14, y);
   y += 6;
-
   const filasResumen = CATEGORIAS
     .map(c => [c.etiqueta, formatoGs(lista.filter(g => g.categoria === c.valor).reduce((s,g) => s+g.monto, 0))])
     .filter((fila, i) => lista.some(g => g.categoria === CATEGORIAS[i].valor));
-
   doc.autoTable({
     head: [["Categoría","Total"]],
     body: filasResumen,
@@ -679,7 +691,6 @@ document.getElementById("btn-exportar").addEventListener("click", function() {
     styles: { fontSize: 9, cellPadding: 4 },
     columnStyles: { 1: { halign: "right" } }
   });
-
   const totalGeneral = lista.reduce((s,g) => s+g.monto, 0);
   let y2 = doc.lastAutoTable.finalY + 10;
   doc.setFontSize(13);
@@ -689,9 +700,10 @@ document.getElementById("btn-exportar").addEventListener("click", function() {
 });
 
 // ============================================================
-//  INICIALIZAR
+// 6. INICIALIZACIÓN
 // ============================================================
-function inicializarApp() {
+function iniciarApp() {
+  console.log("Iniciando aplicación...");
   document.getElementById("fecha").value = hoyISO();
   if (!modalImagen) {
     modalImagen = new bootstrap.Modal(document.getElementById("modal-imagen"));
@@ -700,9 +712,9 @@ function inicializarApp() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', inicializarApp);
+  document.addEventListener('DOMContentLoaded', iniciarApp);
 } else {
-  inicializarApp();
+  iniciarApp();
 }
 </script>
 </body>
